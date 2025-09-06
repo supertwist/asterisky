@@ -141,12 +141,14 @@ CREATE TABLE images (
 
 # 3. Representations (Formal, Conceptual, Historical)
 
-Affinity	What it captures	Primary model(s)	Input	Output
-Formal	Pure visual style – color palette, composition, brush‑stroke, texture	Vision‑only CLIP‑ViT, DINOv2, OpenCLIP, Swin‑V2, or a custom self‑supervised encoder	image	512‑dim embedding
-Conceptual	Semantic meaning – objects, scene, narrative, genre, keywords	Multimodal CLIP (image + text), BLIP‑2, Flava, CoCa	image + captions / tags	512‑dim embedding (aligned to text space)
-Historical	Temporal / provenance context – creation year, art movement, influential artists, exhibition history	Temporal embedding (e.g., sinusoidal encoding of year) + graph‑based influence vectors	year, movement, artist_id (from DB)	128‑dim vector (can be concatenated)
-3.1 Formal Embedding Pipeline
+| Affinity | What it captures | Primary model(s) | Input | Output |
+| --- | --- | --- | --- | --- |
+| **Formal** | Pure visual style – color palette, composition, brush‑stroke, texture | **Vision‑only** CLIP‑ViT, **DINOv2, OpenCLIP, Swin‑V2,** or a custom **self‑supervised** encoder | `image` | 512‑dim embedding |
+| **Conceptual** | Semantic meaning – objects, scene, narrative, genre, keywords | **Multimodal** CLIP (image + text), **BLIP‑2, Flava, CoCa** | `image` + **captions / tags** | 512‑dim embedding (aligned to text space) |
+| **Historical** | Temporal / provenance context – creation year, art movement, influential artists, exhibition history | **Temporal embedding** (e.g., sinusoidal encoding of year) + **graph‑based influence vectors** | `year`, `movement`, `artist_id` (from DB)	128‑dim vector (can be concatenated) |
 
+## 3.1 Formal Embedding Pipeline
+```python
 import torch, torchvision.transforms as T
 from torchvision.models import vit_b_32
 
@@ -166,9 +168,12 @@ def embed_formal(image_path):
         feats = model(x)
     # L2‑normalize for cosine similarity
     return torch.nn.functional.normalize(feats, dim=-1).cpu().numpy().squeeze()
-Alternative: DINOv2 gives richer texture/style vectors (use torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")).
-3.2 Conceptual Embedding (CLIP)
+```
 
++ **Alternative:** `DINOv2` gives richer texture/style vectors (use `torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")`).
+
+## 3.2 Conceptual Embedding (CLIP)
+```python
 import clip, torch
 model, preprocess = clip.load("ViT-L/14", device=device)
 
@@ -177,8 +182,11 @@ def embed_conceptual(image_path):
     with torch.no_grad():
         image_feat = model.encode_image(img)
     return torch.nn.functional.normalize(image_feat, dim=-1).cpu().numpy().squeeze()
-You can fine‑tune CLIP on a domain‑specific caption dataset (e.g., museum catalogues) to improve “conceptual” alignment.
-3.3 Historical Embedding
+```
+
++ You can **fine‑tune** CLIP on a domain‑specific caption dataset (e.g., museum catalogues) to improve “conceptual” alignment.
+
+## 3.3 Historical Embedding
 
 Historical affinity is not a pure visual signal; we encode it as a learned vector that reflects relationships between movements, periods, and artists.
 
