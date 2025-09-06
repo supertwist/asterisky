@@ -188,10 +188,12 @@ def embed_conceptual(image_path):
 
 ## 3.3 Historical Embedding
 
-Historical affinity is not a pure visual signal; we encode it as a learned vector that reflects relationships between movements, periods, and artists.
+Historical affinity is *not* a pure visual signal; we encode it as a **learned vector** that reflects relationships between movements, periods, and artists.
 
-Create a “knowledge graph” of art history (nodes = artists/movements/years, edges = “influenced”, “member of”, “active in”).
-Run Node2Vec or TransE to get a 128‑D embedding per node.
+1. **Create a “knowledge graph”** of art history (nodes = artists/movements/years, edges = “influenced”, “member of”, “active in”).
+2. Run **Node2Vec** or **TransE** to get a 128‑D embedding per node.
+
+```python
 import networkx as nx
 from node2vec import Node2Vec
 
@@ -204,27 +206,32 @@ def embed_historical(artist_id):
         return model.wv[artist_id]   # 128‑D numpy array
     else:
         return np.zeros(128)        # fallback
-Year encoding: np.sin(year/100) + np.cos(year/100) concatenated to the artist vector.
-3.4 Final Composite Vector
+```
 
++ **Year encoding:** `np.sin(year/100)` + `np.cos(year/100)` concatenated to the artist vector.
+
+## 3.4 Final Composite Vector
+```python
 def composite_vector(image_path, artist_id):
     f = embed_formal(image_path)          # 512
     c = embed_conceptual(image_path)      # 512
     h = embed_historical(artist_id)       # 128
     # Weighted concatenation (tune via validation)
     return np.concatenate([0.4*f, 0.4*c, 0.2*h])
-Store this composite vector in a FAISS index for fast ANN (Approximate Nearest Neighbor) queries.
+```
+
+Store this **composite vector** in a **FAISS** index for fast ANN (Approximate Nearest Neighbor) queries.
 
 # 4. Graph Construction & Storage
 
 ## 4.1 Why a Graph?
 
-Multimodal edges – each affinity type becomes a separate edge label (FORMAL_SIM, CONCEPT_SIM, HISTORICAL_SIM).
-Explainability – you can traverse “why” a recommendation was made (e.g., “shared color palette + same movement”).
-Hybrid queries – combine vector similarity with property filters (e.g., “show only CC‑BY images from 1900‑1920”).
++ **Multimodal edges** – each affinity type becomes a separate edge label (`FORMAL_SIM`, `CONCEPT_SIM`, `HISTORICAL_SIM`).
++ **Explainability** – you can traverse “why” a recommendation was made (e.g., “shared color palette + same movement”).
++ **Hybrid queries** – combine vector similarity with property filters (e.g., “show only CC‑BY images from 1900‑1920”).
 
 ## 4.2 Neo4j Schema
-
+```cypher
 // Node
 CREATE CONSTRAINT ON (i:Image) ASSERT i.id IS UNIQUE;
 
@@ -235,9 +242,10 @@ CREATE INDEX ON :Image(formalVec);
 CREATE INDEX ON :Image(conceptVec);
 // 3. Historical similarity
 CREATE INDEX ON :Image(historicalVec);
+```
 
 ### 4.2.1 Edge Generation (batch job)
-
+```python
 import numpy as np, faiss, psycopg2, neo4j
 
 # 1️⃣ Load vectors from FAISS index (or from DB)
@@ -274,25 +282,27 @@ with driver.session() as session:
             # we can compute partial sims if we stored separate vectors
             # For demo we just reuse the composite sim
             session.write_transaction(create_edges, src_id, dst_id, float(sim), "SIMILAR")
-Thresholding: keep edges where sim > 0.75 or top‑K per node to limit graph density.
-Edge properties: weight, affinity_type (if you keep separate edge labels).
+```
+
++ **Thresholding:** keep edges where `sim > 0.75` or top‑K per node to limit graph density.
++ **Edge properties:** `weight`, `affinity_type` (if you keep separate edge labels).
 
 ## 4.3 Property Store (PostgreSQL) ↔ Graph Sync
 
-Use Debezium or logical replication to stream new rows from PostgreSQL to Neo4j via a Kafka topic.
-Or run a nightly batch that UPSERTs missing nodes/edges.
++ Use **Debezium** or **logical replication** to stream new rows from PostgreSQL to Neo4j via a Kafka topic.
++ Or run a nightly batch that **UPSERTs** missing nodes/edges.
 
 # 5. Recommendation Engine
 
 ## 5.1 Simple Hybrid Scoring
 
-Given a query image q:
+Given a **query image** `q`:
 
-Compute its composite vector v_q.
-Retrieve top‑N nearest neighbours from FAISS → set V.
-Pull corresponding edge weights from Neo4j (if any).
-Combine:
-s
+1. Compute its **composite vector** `v_q`.
+2. Retrieve top‑N nearest neighbours from FAISS → set `V`.
+3. Pull corresponding **edge weights** from Neo4j (if any).
+4. Combine:
+$$s
 c
 o
 r
@@ -343,7 +353,7 @@ edge∈{F,C,H}
 edge
 ​
 
-​
+​$$
 
 Typical values: α=0.7, β=0.3.
 
@@ -482,7 +492,8 @@ repo/
 ├─ Dockerfile
 ├─ docker-compose.yml
 └─ README.md
-Dockerfile builds a multi‑stage image:
+
++ **Dockerfile** builds a multi‑stage image:
 1️⃣ Base = python:3.11-slim + ffmpeg, libgl1.
 2️⃣ Install torch, torchvision, faiss-gpu, neo4j, psycopg2.
 3️⃣ Copy the code, set entrypoint to uvicorn api.main:app.
