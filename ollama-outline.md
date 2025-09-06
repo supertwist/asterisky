@@ -2,7 +2,7 @@ Below is a complete end‑to‑end blueprint for building a “starting‑image�
 
 The guide is broken into four layers (data, representation, graph, service) and includes concrete tool choices, code snippets, and a realistic project timeline.
 
-## 1. High‑Level Architecture
+# 1. High‑Level Architecture
 
                +-------------------+        +-------------------+
                |  Scrapers / Crawl |  --->  |  Raw Image Store  |
@@ -54,7 +54,7 @@ The guide is broken into four layers (data, representation, graph, service) and 
 + **Neo4j** (or similar) stores a **multigraph** where each edge type corresponds to one affinity.
 + **Recommendation Engine** performs a **weighted‑sum** of similarity scores or runs a **graph neural network*** to rank candidates.
 
-## 2. Data Acquisition (Scraping & Ingestion)
+# 2. Data Acquisition (Scraping & Ingestion)
 
 Source	Typical Access	Legal Note	Recommended Scraper
 Wikimedia Commons	Public API, OAI‑PMH	CC‑BY/SA	mwclient + requests
@@ -110,11 +110,15 @@ if __name__ == "__main__":
 
 ## 2.2 Metadata Harvesting
 
-EXIF / IPTC – piexif, exiftool.
-Embedded textual description – parse the API‑provided description, tags, captions.
-OCR on the image (if it contains text) – pytesseract or Google Vision API.
-Provenance – capture source, license, creation_date, artist/author, museum/collection.
-All metadata goes into a PostgreSQL table:
+1. **EXIF / IPTC** – 'piexif`, `exiftool`.
+2. **Embedded textual description** – parse the API‑provided `description`, `tags`, `captions`.
+3. **OCR on the image** (if it contains text) – `pytesseract` or **Google Vision API.**
+4. **Provenance** – capture `source`, `license`, `creation_date`, `artist/author`, `museum/collection`.
+
+All metadata goes into a **PostgreSQL** table:
+
+```
+sql
 
 CREATE TABLE images (
     id          UUID PRIMARY KEY,
@@ -132,7 +136,9 @@ CREATE TABLE images (
     ocr_text    TEXT,
     ingest_ts   TIMESTAMP DEFAULT now()
 );
-3. Representations (Formal, Conceptual, Historical)
+```
+
+# 3. Representations (Formal, Conceptual, Historical)
 
 Affinity	What it captures	Primary model(s)	Input	Output
 Formal	Pure visual style – color palette, composition, brush‑stroke, texture	Vision‑only CLIP‑ViT, DINOv2, OpenCLIP, Swin‑V2, or a custom self‑supervised encoder	image	512‑dim embedding
