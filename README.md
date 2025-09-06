@@ -8,6 +8,8 @@ This is a thought experiment/sketch to extend **asterism** such that image board
 2. **conceptual affinities** - subject matter, intentions, associations, influences
 3. **historical affinities** - date of creation, provenance, contemporary events
 
+There may be a better set of dimensions for this problem, but this is a simple, small number for illustration.
+
 We propose using generative AI to build a graph udnerlying a recommendation system.
 
 A graph of all images from the selected databases that maps them into a space then allows identification of where a specific image falls relative to all others, and 'recommend' images of varying (user-specified?) adjacency on an axis from nearest neighbor to most distant.

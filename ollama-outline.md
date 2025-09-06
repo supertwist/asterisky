@@ -1,4 +1,4 @@
-***Generated using local Ollama. Fixing markdown, and will review in detail and comment as time allows. For now, just a useful roadmap.***
+***Generated using Ollama, `gpt-oss:120b`. Fixing markdown, and will review in detail and comment as time allows. For now, just a useful roadmap.***
 
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
 
