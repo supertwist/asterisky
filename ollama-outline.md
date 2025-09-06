@@ -214,14 +214,16 @@ def composite_vector(image_path, artist_id):
     # Weighted concatenation (tune via validation)
     return np.concatenate([0.4*f, 0.4*c, 0.2*h])
 Store this composite vector in a FAISS index for fast ANN (Approximate Nearest Neighbor) queries.
-4. Graph Construction & Storage
 
-4.1 Why a Graph?
+# 4. Graph Construction & Storage
+
+## 4.1 Why a Graph?
 
 Multimodal edges – each affinity type becomes a separate edge label (FORMAL_SIM, CONCEPT_SIM, HISTORICAL_SIM).
 Explainability – you can traverse “why” a recommendation was made (e.g., “shared color palette + same movement”).
 Hybrid queries – combine vector similarity with property filters (e.g., “show only CC‑BY images from 1900‑1920”).
-4.2 Neo4j Schema
+
+## 4.2 Neo4j Schema
 
 // Node
 CREATE CONSTRAINT ON (i:Image) ASSERT i.id IS UNIQUE;
@@ -233,7 +235,8 @@ CREATE INDEX ON :Image(formalVec);
 CREATE INDEX ON :Image(conceptVec);
 // 3. Historical similarity
 CREATE INDEX ON :Image(historicalVec);
-4.2.1 Edge Generation (batch job)
+
+### 4.2.1 Edge Generation (batch job)
 
 import numpy as np, faiss, psycopg2, neo4j
 
@@ -273,13 +276,15 @@ with driver.session() as session:
             session.write_transaction(create_edges, src_id, dst_id, float(sim), "SIMILAR")
 Thresholding: keep edges where sim > 0.75 or top‑K per node to limit graph density.
 Edge properties: weight, affinity_type (if you keep separate edge labels).
-4.3 Property Store (PostgreSQL) ↔ Graph Sync
+
+## 4.3 Property Store (PostgreSQL) ↔ Graph Sync
 
 Use Debezium or logical replication to stream new rows from PostgreSQL to Neo4j via a Kafka topic.
 Or run a nightly batch that UPSERTs missing nodes/edges.
-5. Recommendation Engine
 
-5.1 Simple Hybrid Scoring
+# 5. Recommendation Engine
+
+## 5.1 Simple Hybrid Scoring
 
 Given a query image q:
 
