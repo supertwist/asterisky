@@ -141,7 +141,7 @@ CREATE TABLE images (
 
 # 3. Representations (Formal, Conceptual, Historical)
 
-| Affinity | What it captures | Primary model(s) | Input | Output |
+| **Affinity** | **What it captures** | **Primary model(s)** | **Input** | **Output** |
 | --- | --- | --- | --- | --- |
 | **Formal** | Pure visual style – color palette, composition, brush‑stroke, texture | **Vision‑only** CLIP‑ViT, **DINOv2, OpenCLIP, Swin‑V2,** or a custom **self‑supervised** encoder | `image` | 512‑dim embedding |
 | **Conceptual** | Semantic meaning – objects, scene, narrative, genre, keywords | **Multimodal** CLIP (image + text), **BLIP‑2, Flava, CoCa** | `image` + **captions / tags** | 512‑dim embedding (aligned to text space) |
@@ -451,31 +451,33 @@ async def recommend(file: UploadFile, top_k: int = 20):
 
 # 8. Legal & Ethical Checklist
 
-Issue	Mitigation
-Copyright	Only ingest images with CC‑0, CC‑BY, CC‑BY‑SA or other permissive licenses. Record the original license in the DB; expose it in the UI.
-Attribution	Auto‑generate an “Attribution string” (Artist – Source – License) for every recommendation.
-Bias	Evaluate representation across cultures, genders, eras. Add a “diversity” weighting if needed.
-Privacy	No personal data is collected; if you ever ingest user‑uploaded images, run face‑blur before storage.
-Explainability	UI shows the three affinity scores (e.g., “Formal: 0.81 – same palette”, “Conceptual: 0.73 – both depict trains”, “Historical: 0.68 – both early‑20th c. Impressionism”).
+| **Issue** | **Mitigation** |
+| --- | --- |
+| **Copyright** | Only ingest images with CC‑0, CC‑BY, CC‑BY‑SA or other permissive licenses. Record the original license in the DB; expose it in the UI. |
+| **Attribution** | Auto‑generate an “Attribution string” (Artist – Source – License) for every recommendation. |
+| **Bias** | Evaluate representation across cultures, genders, eras. Add a “diversity” weighting if needed. |
+| **Privacy** | No personal data is collected; if you ever ingest user‑uploaded images, run face‑blur before storage. |
+| **Explainability** | UI shows the three affinity scores (e.g., “Formal: 0.81 – same palette”, “Conceptual: 0.73 – both depict trains”, “Historical: 0.68 – both early‑20th c. Impressionism”). |
 
 # 9. Sample Project Timeline (6 Months)
 
-Week	Milestone
-1‑2	Set up repo, CI, cloud infra; pick 2‑3 pilot image sources.
-3‑4	Write scrapers → store raw images & metadata in S3 + Postgres.
-5‑6	Build formal & conceptual embedding pipelines; generate first 10 k vectors.
-7‑8	Create historical knowledge graph, run Node2Vec, store vectors.
-9‑10	Assemble composite vectors, evaluate similarity on a small validation set.
-11‑12	Deploy FAISS index + simple ANN query service.
-13‑14	Load vectors into Neo4j, generate edges (top‑20 per node).
-15‑16	Implement FastAPI recommendation endpoint; basic UI (React).
-17‑18	Run human evaluation; tune weighting, edge thresholds.
-19‑20	Add GNN link‑prediction model (optional) and compare performance.
-21‑22	Scale up to 1 M images; shard FAISS, add Neo4j replicas.
-23‑24	Write documentation, open‑source the code, prepare demo video.
+| **Week** | **Milestone** |
+| --- | --- |
+| 1‑2 | Set up repo, CI, cloud infra; pick 2‑3 pilot image sources. |
+| 3‑4 | Write scrapers → store raw images & metadata in S3 + Postgres. |
+| 5‑6 | Build formal & conceptual embedding pipelines; generate first 10 k vectors. |
+| 7‑8 | Create historical knowledge graph, run Node2Vec, store vectors. |
+| 9‑10 | Assemble composite vectors, evaluate similarity on a small validation set. |
+| 11‑12 | Deploy FAISS index + simple ANN query service. |
+| 13‑14 | Load vectors into Neo4j, generate edges (top‑20 per node). |
+| 15‑16 | Implement FastAPI recommendation endpoint; basic UI (React). |
+| 17‑18 | Run human evaluation; tune weighting, edge thresholds. |
+| 19‑20 | Add GNN link‑prediction model (optional) and compare performance. |
+| 21‑22 | Scale up to 1 M images; shard FAISS, add Neo4j replicas. |
+| 23‑24 | Write documentation, open‑source the code, prepare demo video. |
 
 # 10. Quick‑Start Code Repository Skeleton
-
+```
 repo/
 ├─ data/
 │   ├─ raw/                # S3 sync folder (git‑ignore)
@@ -505,6 +507,7 @@ repo/
 ├─ Dockerfile
 ├─ docker-compose.yml
 └─ README.md
+```
 
 + **Dockerfile** builds a multi‑stage image:
 1️⃣ Base = python:3.11-slim + ffmpeg, libgl1.
