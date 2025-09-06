@@ -1,4 +1,9 @@
-***Generated using Ollama, `gpt-oss:120b`. Fixing markdown, and will review in detail and comment as time allows. For now, just a useful roadmap.***
+***Generated using Ollama, `gpt-oss:120b`. Fixing markdown - the formula in 5.1 in incoorectly rendered - I need to go deep on markdown renderings of formulas, and will review in detail and comment as time allows. For now, just a useful roadmap.***
+
+**Things to do**
++ Fix 5.1 formula
++ revise 2.0 Data acqusition table to reflect actual sources used in Asterism
++ review services required, price, and look for free alternatives
 
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
 
