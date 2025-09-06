@@ -14,8 +14,8 @@ A graph of all images from the selected databases that maps them into a space th
 
 This lays the groundwork for a version of asterism as proposed to Nidhi and Marc via email correspondence:
 
-For each image, I want a rich description of what it is AND a way to connect it to, say 5 formally or conceptually 'adjacent' images - then user can either replace the current image with an adjacent image OR replace another image on screen SUCH that a user could build a collection of images that explores a thread of an idea.
-
+> For each image, I want a rich description of what it is AND a way to connect it to, say 5 formally or conceptually 'adjacent' images - then user can either replace the current image with an adjacent image OR replace another image on screen SUCH that a user could build a collection of images that explores a thread of an idea.
+>
 > I'm imagining a kind of visual gin rummy.
 > + Player is dealt 7 cards (images).
 > + Each card when flipped over (from image on the face) reveals 5 more possible cards (5 more images, or even 3) that are associated to the card by formal or conceptual similarities.
