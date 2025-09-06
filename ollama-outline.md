@@ -438,15 +438,16 @@ async def recommend(file: UploadFile, top_k: int = 20):
 
 # 7. Scalability & Ops
 
-Component	Scale Strategy
-Scrapers	Deploy as Kubernetes CronJobs or AWS Batch; use S3 for raw storage.
-Embedding Service	GPU‑enabled inference workers behind a Ray Serve or Triton Inference Server.
-FAISS Index	Use FAISS‑GPU for up‑to‑5 M vectors; beyond that split into shards with FAISS‑IVF + distributed RPC (e.g., via faiss-gRPC).
-Neo4j	Run a Causal Cluster (3 core + 3 read replicas). Keep edge count < 100 M; otherwise consider JanusGraph + ScyllaDB.
-Metadata DB	PostgreSQL with partitioning by ingestion date.
-CI/CD	GitHub Actions → Docker images → Helm charts → Helm release on a private EKS/GKE cluster.
-Monitoring	Prometheus + Grafana (FAISS query latency, Neo4j query time, GPU utilization).
-Backup	Daily S3 snapshots of raw images + nightly dump of Postgres + Neo4j export (neo4j-admin dump).
+| **Component** | **Scale Strategy** |
+| --- | --- |
+| **Scrapers** | Deploy as **Kubernetes CronJobs** or **AWS Batch;** use S3 for raw storage. |
+| **Embedding Service** | GPU‑enabled inference workers behind a **Ray Serve** or **Triton Inference Server.** |
+| **FAISS Index** | Use **FAISS‑GPU** for up‑to‑5M vectors; beyond that split into **shards** with **FAISS‑IVF + distributed RPC** (e.g., via faiss-gRPC). |
+| **Neo4j** | Run a **Causal Cluster** (3 core + 3 read replicas). Keep edge count < 100 M; otherwise consider **JanusGraph + ScyllaDB.** |
+| **Metadata DB** | PostgreSQL with **partitioning** by ingestion date. |
+| **CI/CD** | GitHub Actions → Docker images → Helm charts → Helm release on a private EKS/GKE cluster.
+| **Monitoring** | Prometheus + Grafana (FAISS query latency, Neo4j query time, GPU utilization).
+| **Backup** | Daily S3 snapshots of raw images + nightly dump of Postgres + Neo4j export (neo4j-admin dump).
 
 # 8. Legal & Ethical Checklist
 
