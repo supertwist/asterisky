@@ -1,4 +1,5 @@
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
+
 The guide is broken into four layers (data, representation, graph, service) and includes concrete tool choices, code snippets, and a realistic project timeline.
 
 ## 1. High‑Level Architecture
@@ -61,8 +62,9 @@ Flickr	Public API (requires API key)	CC‑BY/SA or All Rights Reserved	flickrapi
 Unsplash	API (rate‑limited)	Unsplash License (free commercial)	unsplash-python
 Art Institute of Chicago, Met Museum, Europeana	Open data portals (CSV/JSON)	CC‑0/CC‑BY	wget/curl + pandas
 Google Image Search	Not recommended for large‑scale scraping (TOS violation)	–	Use Bing Image Search API (commercial)
-2.1 Scraper Boilerplate (Python)
 
+## 2.1 Scraper Boilerplate (Python)
+```
 import asyncio, aiohttp, hashlib, os, json, pathlib
 from tqdm.asyncio import tqdm
 
@@ -100,10 +102,13 @@ async def crawl_wikimedia(limit=10_000):
 
 if __name__ == "__main__":
     asyncio.run(crawl_wikimedia())
-Parallelism: aiohttp + asyncio gives 100–200 req/s on a decent VM.
-Back‑off: Respect Retry-After headers; add random jitter.
-Deduplication: Store a SHA‑256 of the raw bytes; skip if already present.
-2.2 Metadata Harvesting
+```
+
++ **Parallelism:** `aiohttp` + `asyncio` gives 100–200 req/s on a decent VM.
++ **Back‑off:** Respect `Retry-After` headers; add random jitter.
++ **Deduplication:** Store a SHA‑256 of the raw bytes; skip if already present.
+
+## 2.2 Metadata Harvesting
 
 EXIF / IPTC – piexif, exiftool.
 Embedded textual description – parse the API‑provided description, tags, captions.
