@@ -1,4 +1,4 @@
-***Generated using local Ollama***
+***Generated using local Ollama. Fixing markdown, and will review in detail and comment as time allows. For now, just a useful roadmap. ***
 
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
 
@@ -54,7 +54,7 @@ The guide is broken into four layers (data, representation, graph, service) and 
 + **Embedding Service** creates three orthogonal embeddings per image.
 + **Vector + Property Stores** keep fast‑lookup vectors and rich metadata.
 + **Neo4j** (or similar) stores a **multigraph** where each edge type corresponds to one affinity.
-+ **Recommendation Engine** performs a **weighted‑sum** of similarity scores or runs a **graph neural network*** to rank candidates.
++ **Recommendation Engine** performs a **weighted‑sum** of similarity scores or runs a **graph neural network** to rank candidates.
 
 # 2. Data Acquisition (Scraping & Ingestion)
 
@@ -67,7 +67,7 @@ The guide is broken into four layers (data, representation, graph, service) and 
 | **Google Image Search** | Not recommended for large‑scale scraping (TOS violation) | – | Use **Bing Image Search API** (commercial) |
 
 ## 2.1 Scraper Boilerplate (Python)
-```
+```python
 import asyncio, aiohttp, hashlib, os, json, pathlib
 from tqdm.asyncio import tqdm
 
@@ -113,16 +113,14 @@ if __name__ == "__main__":
 
 ## 2.2 Metadata Harvesting
 
-1. **EXIF / IPTC** – 'piexif`, `exiftool`.
+1. **EXIF / IPTC** – `piexif`, `exiftool`.
 2. **Embedded textual description** – parse the API‑provided `description`, `tags`, `captions`.
 3. **OCR on the image** (if it contains text) – `pytesseract` or **Google Vision API.**
 4. **Provenance** – capture `source`, `license`, `creation_date`, `artist/author`, `museum/collection`.
 
 All metadata goes into a **PostgreSQL** table:
 
-```
-sql
-
+```sql
 CREATE TABLE images (
     id          UUID PRIMARY KEY,
     source      TEXT,
