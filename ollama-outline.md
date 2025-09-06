@@ -645,3 +645,34 @@ repo/
 + **Start small, iterate** – a prototype with 10‑20 k images will surface most engineering challenges (deduplication, licensing, vector drift). Once the pipeline is stable, scale horizontally.
 
 You now have a full technical roadmap, sample code, and operational guidance to turn a “starting‑image recommendation” concept into a production‑ready system. Good luck, and feel free to ask for deeper dives into any component!
+
+# 12. Postscript: Cost (according to Ollama)
+**TL;DR**
++ **Total annual bill:** ≈$60k (≈$5k/month).
++ **Biggest expense:** LLM inference (~$1500/month).
++ **GPU compute for OCR/embeddings:** ~$440/month.
++ **All other services** (DB, vector store, storage, networking, ops) stay under $2000/month.
+
+With modest traffic (1k users × 500 interactions each) the platform is well within the budget of a small startup or a department‑level research project, and there are clear levers to trim costs further as the product matures.
+
+## 12.1 Cost‑Estimation (Production‑Ready Deployment)
+The figures below are **high‑level “ball‑park” estimates** for a 12‑month run of the image‑recommendation service described in the previous sections. They assume you are using a **major public‑cloud provider** (AWS, GCP or Azure – the numbers are largely interchangeable) and that the system is built with the open‑source stack already outlined (PostgreSQL + PGVector, Qdrant, FastAPI, Docker/Kubernetes, etc.).
+
+All numbers are **monthly** unless otherwise noted. Prices are taken from the 2025 public‑cloud price lists (rounded to the nearest cent) and include a modest 20% buffer for traffic spikes, backups and minor over‑provisioning.
+
+| **#** | **Service / Resource** | **Usage Assumptions** | **Monthly Cost (USD)** | **Annual Cost (USD)** | **Notes** |
+| --- | --- | --- | --- | --- | --- |
+| **1** | **Compute – API + Orchestrator** (2×vCPU, 8GiB RAM)	2×t3.medium (or e2‑medium) EC2 / GCE instances running 24h, auto‑scaled to 2 nodes for HA | $80 (≈$40×2) | $960 | Handles FastAPI, request routing, job‑queue workers. |
+| **2** | **Compute – Image‑Processing Workers** (GPU for OCR & embeddings) | 2×p3.2xlarge (1 GPU, 8 vCPU, 61 GiB) running 12h/day (batch processing of newly‑ingested images). ≈24k GPU‑hours per year. | $440 (≈$220×2) | $5280| NVIDIA T4 (or equivalent) on‑demand. OCR (Tesseract) + CLIP embedding generation. |
+| **3** | **Vector Store – Qdrant (managed)** | 200 GiB SSD storage, 2 CPU cores, 8 GiB RAM (Qdrant‑cloud “Standard”) | $120 | $1440 | Stores ~1M embeddings (≈150 GiB) + overhead. |
+| **4** | **Relational DB – Amazon RDS (PostgreSQL+PGVector)** | db.t3.medium (2 vCPU, 4 GiB), 500 GiB gp3 SSD (to hold raw images metadata, tags, OCR text). Daily backup retained 30 days. | $110 | $1320 | Multi‑AZ HA adds ~30% cost – already baked into figure. |
+| **5** | **Object Storage – S3 / Cloud Storage** | 2 TB of raw‑image files (average 2 MB×≈1 M images) + 200 GB of processed thumbnails. Standard tier, 0.02 USD/GB‑month. | $44 | $528 | Includes 5% egress for API downloads. |
+| **6** | **Embedding Generation (LLM‑hosted) – OpenAI / Azure OpenAI** (text‑to‑vector via `text‑embedding‑ada‑002`) | 1 M embeddings (≈30 M tokens). $0.0001/1k tokens → $3/month. | $3 | $36 | Very cheap; most cost is GPU compute above. |
+| **7** | **LLM Inference (Chat‑Completion) – GPT‑4o** (or Claude‑3.5) for user‑facing explanations | 500k user interactions × average 200 tokens per request (prompt + completion) = 100M tokens. $0.015/1k tokens → $1500/month. | $1500 | $18000 | Core cost driver – can be swapped for a smaller model (e.g., GPT‑4‑Turbo) to cut ~30%. |
+| **8** | **CDN / Bandwidth** | 500k image‑preview deliveries @≈200KB each = 100GB egress + API traffic ~20GB. $0.09/GB (first 10TB). | $11 | $132 | Covered by CloudFront / Cloudflare free tier + overage. |
+| **9** | **Logging, Monitoring & Alerting** (CloudWatch / Stackdriver) | 2GB logs/day, 3‑metric dashboards, alert notifications. | $25 | $300 | Includes retention for 30 days. |
+| **10** | **CI/CD & Registry** (GitHub Actions + ECR / Artifact Registry) | 200 build minutes/month, 5GB container storage. | $7 | $84 | Negligible. |
+| **11** | **Security & IAM** (Secrets Manager, KMS) | 10 secrets, 1 KMS key, encryption‑at‑rest. | $5 | $60 | - |
+| **12** | **Personnel (Part‑time Ops/Dev)** | 0.25FTE (≈10h/week) senior engineer for deployments, updates & incident response. | $2500 | $30000 | Assumes $120k/yr salary + benefits. |
+| **13** | **Contingency / Miscellaneous** | 10% of subtotal (covers occasional spot‑instance usage, extra storage, licensing for optional commercial tools). | $558 | $6696 | - |
+| **—** | **Total Monthly** | - | **≈$4983** | **≈$59800** | - |
