@@ -10,7 +10,7 @@ This is a thought experiment/sketch to extend **Asterism** such that image board
 
 There may be a better set of dimensions for this problem, but this is a simple, small number for illustration.
 
-We propose using generative AI to build a graph udnerlying a recommendation system.
+We propose using generative AI to build a graph underlying a recommendation system.
 
 A graph of all images from the selected databases that maps them into a space then allows identification of where a specific image falls relative to all others, and 'recommend' images of varying (user-specified?) adjacency on an axis from nearest neighbor to most distant.
 
