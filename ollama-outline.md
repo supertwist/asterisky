@@ -62,59 +62,175 @@ The guide is broken into four layers (data, representation, graph, service) and 
 + **Recommendation Engine** performs a **weighted‑sum** of similarity scores or runs a **graph neural network** to rank candidates.
 
 # 2. Data Acquisition (Scraping & Ingestion)
-
-| **Source** | **Typical Access** | **Legal Note** | **Recommended Scraper** |
+| **Source** | **Typical Access Method** | **License / Legal Note** | **Recommended Scraper / Tool** |
 | --- | --- | --- | --- |
-| **Wikimedia Commons** | Public API, OAI‑PMH | CC‑BY/SA | `mwclient` + `requests` |
-| **Flickr** | Public API (requires API key) | CC‑BY/SA or All Rights Reserved | `flickrapi` |
-| **Unsplash** | API (rate‑limited) | Unsplash License (free commercial) | `unsplash-python` |
-| **Art Institute of Chicago, Met Museum, Europeana** | Open data portals (CSV/JSON) | CC‑0/CC‑BY | `wget/curl` + `pandas` |
-| **Google Image Search** | Not recommended for large‑scale scraping (TOS violation) | – | Use **Bing Image Search API** (commercial) |
+| **Wikimedia Commons** | Public MediaWiki API (action=query&list=allimages) – supports continuation for paging | Mostly **CC‑BY, CC‑BY‑SA, CC0,** and some **All Rights Reserved** items. Always keep the `license` field from the API response. | `mwclient` + `aiohttp` (async) – see the code block in the original section. |
+| **The Metropolitan Museum of Art – Open Access** | Bulk download of a [**JSON‑LD** manifest](https://github.com/metmuseum/openaccess) plus direct image URLs. The manifest contains metadata, tags, and rights. | **CC‑0** (public domain) for ~375k images. No attribution required, but it’s good practice to keep the `artist` / `source` fields. | Simple `requests` + `pandas` to read the JSON lines; a tiny helper script (shown below). |
+| **The Art Institute of Chicago – Digital Collections** | REST API (https://api.artic.edu/api/v1/artworks) that returns paginated JSON with image IDs, URLs, and rights information. | **CC‑BY‑SA** for most images; a few are **All Rights Reserved.** Respect the `rights_statement` field. | `aiohttp` async loop + pagination handling (code below). |
 
-## 2.1 Scraper Boilerplate (Python)
+**Why these three?**
++ All three provide machine‑readable metadata (tags, creator, creation date, rights).
++ They expose large open‑access corpora that are safe to redistribute in a recommendation service (provided you surface the original license).
++ Each has a stable, documented API, which means you can keep the scrapers running long‑term with minimal maintenance.
+
+## 2.1 Unified Scraper Skeleton
+All three sources can be driven from a single **async‑oriented** framework. The skeleton below shows how to plug in each source as a coroutine that yields a dictionary for every image:
+
 ```python
-import asyncio, aiohttp, hashlib, os, json, pathlib
+import asyncio, aiohttp, hashlib, json, pathlib, os
 from tqdm.asyncio import tqdm
 
-API_ROOT = "https://commons.wikimedia.org/w/api.php"
-SAVE_ROOT = pathlib.Path("./raw_images")
-SAVE_ROOT.mkdir(parents=True, exist_ok=True)
+BASE_DIR = pathlib.Path("./raw_images")
+BASE_DIR.mkdir(parents=True, exist_ok=True)
 
-async def fetch_image(session, url, img_id):
+# ----------------------------------------------------------------------
+# 1️⃣ Wikimedia Commons
+# ----------------------------------------------------------------------
+WIKI_API = "https://commons.wikimedia.org/w/api.php"
+
+async def wiki_fetch_one(session, img):
+    url = f"https:{img['url']}"
     async with session.get(url) as resp:
-        if resp.status != 200: return
+        if resp.status != 200:
+            return None
         data = await resp.read()
         sha = hashlib.sha256(data).hexdigest()[:16]
         ext = url.split(".")[-1].split("?")[0]
-        path = SAVE_ROOT / f"{img_id}_{sha}.{ext}"
+        path = BASE_DIR / f"{img['name']}_{sha}.{ext}"
         path.write_bytes(data)
-        return {"id": img_id, "url": url, "path": str(path)}
+        return {
+            "source": "wikimedia",
+            "source_id": img["name"],
+            "url": url,
+            "path": str(path),
+            "license": img.get("license", "unknown"),
+            "title": img.get("title", ""),
+            "description": img.get("description", "")
+        }
 
-async def crawl_wikimedia(limit=10_000):
+async def crawl_wikimedia(limit: int = 10_000):
     async with aiohttp.ClientSession() as session:
-        async for cont in aiohttp.Cursor(session, API_ROOT,
-                                         params={"action":"query",
-                                                 "list":"allimages",
-                                                 "ailimit":"max",
-                                                 "format":"json"}):
-            tasks = []
-            for img in cont["query"]["allimages"]:
-                img_url = f"https:{img['url']}"
-                tasks.append(fetch_image(session, img_url, img["name"]))
-            results = await asyncio.gather(*tasks)
-            # store meta in a DB or JSONL
-            with open("metadata.jsonl", "a") as f:
-                for r in filter(None, results):
-                    f.write(json.dumps(r) + "\n")
-            if len(results) >= limit: break
+        cont = {"continue": None}
+        fetched = 0
+        while fetched < limit:
+            params = {
+                "action": "query",
+                "list": "allimages",
+                "ailimit": "max",
+                "format": "json",
+                **cont
+            }
+            async with session.get(WIKI_API, params=params) as resp:
+                payload = await resp.json()
+                imgs = payload["query"]["allimages"]
+                tasks = [wiki_fetch_one(session, i) for i in imgs]
+                for meta in await asyncio.gather(*tasks):
+                    if meta:
+                        yield meta
+                fetched += len(imgs)
+                cont = payload.get("continue", {})
+                if not cont:
+                    break
+
+# ----------------------------------------------------------------------
+# 2️⃣ The Met – Open Access (JSON‑LD manifest)
+# ----------------------------------------------------------------------
+MET_MANIFEST = "https://raw.githubusercontent.com/metmuseum/openaccess/master/Metadata/CC0/cc0.json"
+
+async def crawl_met():
+    # The manifest is a single huge JSON‑L file – we stream it line‑by‑line.
+    async with aiohttp.ClientSession() as session:
+        async with session.get(MET_MANIFEST) as resp:
+            async for line in resp.content:
+                record = json.loads(line)
+                # Skip entries that lack an image URL
+                if not record.get("primaryImage"):
+                    continue
+                img_url = record["primaryImage"]
+                async with session.get(img_url) as img_resp:
+                    if img_resp.status != 200:
+                        continue
+                    data = await img_resp.read()
+                    sha = hashlib.sha256(data).hexdigest()[:16]
+                    ext = img_url.split(".")[-1].split("?")[0]
+                    path = BASE_DIR / f"{record['objectID']}_{sha}.{ext}"
+                    path.write_bytes(data)
+                    yield {
+                        "source": "met",
+                        "source_id": str(record["objectID"]),
+                        "url": img_url,
+                        "path": str(path),
+                        "license": "CC0",
+                        "title": record.get("title", ""),
+                        "artist": record.get("artistDisplayName", ""),
+                        "date": record.get("objectDate", "")
+                    }
+
+# ----------------------------------------------------------------------
+# 3️⃣ Art Institute of Chicago – Digital Collections
+# ----------------------------------------------------------------------
+AIC_API = "https://api.artic.edu/api/v1/artworks"
+
+async def crawl_aic(page_size: int = 100):
+    async with aiohttp.ClientSession() as session:
+        page = 1
+        while True:
+            params = {"page": page, "limit": page_size, "fields": "id,title,image_id,artist_title,date_display,license_text,thumbnail"}
+            async with session.get(AIC_API, params=params) as resp:
+                payload = await resp.json()
+                data = payload["data"]
+                if not data:
+                    break
+                for rec in data:
+                    if not rec.get("image_id"):
+                        continue
+                    img_url = f"https://www.artic.edu/iiif/2/{rec['image_id']}/full/843,/0/default.jpg"
+                    async with session.get(img_url) as img_resp:
+                        if img_resp.status != 200:
+                            continue
+                        raw = await img_resp.read()
+                        sha = hashlib.sha256(raw).hexdigest()[:16]
+                        ext = "jpg"
+                        path = BASE_DIR / f"{rec['id']}_{sha}.{ext}"
+                        path.write_bytes(raw)
+                        yield {
+                            "source": "artic",
+                            "source_id": str(rec["id"]),
+                            "url": img_url,
+                            "path": str(path),
+                            "license": rec.get("license_text", "unknown"),
+                            "title": rec.get("title", ""),
+                            "artist": rec.get("artist_title", ""),
+                            "date": rec.get("date_display", "")
+                        }
+                page += 1
+
+# ----------------------------------------------------------------------
+# 4️⃣ Orchestrator – write everything to a JSONL file for downstream steps
+# ----------------------------------------------------------------------
+async def orchestrate():
+    out = open("metadata.jsonl", "a")
+    async for meta in crawl_wikimedia(limit=30_000):
+        out.write(json.dumps(meta) + "\n")
+    async for meta in crawl_met():
+        out.write(json.dumps(meta) + "\n")
+    async for meta in crawl_aic():
+        out.write(json.dumps(meta) + "\n")
+    out.close()
 
 if __name__ == "__main__":
-    asyncio.run(crawl_wikimedia())
+    asyncio.run(orchestrate())
 ```
 
-+ **Parallelism:** `aiohttp` + `asyncio` gives 100–200 req/s on a decent VM.
-+ **Back‑off:** Respect `Retry-After` headers; add random jitter.
-+ **Deduplication:** Store a SHA‑256 of the raw bytes; skip if already present.
+**What the script does**
+| **Step** | **Action** |
+| --- | --- |
+| **Deduplication** | SHA‑256 of the raw bytes is saved; if the same hash appears again you can simply skip writing a new file. |
+| **License capture** | The `license` (or `license_text`) field from each source is stored verbatim; you’ll expose it later in the UI and in the API response. |
+| **Metadata enrichment** | Basic fields like `title`, `artist`, `date` are harvested now so you don’t have to re‑parse the JSON later. |
+| **Streaming** | The whole pipeline is async; you can easily spin up multiple workers (e.g., via `asyncio.gather`) to increase throughput without over‑loading the source APIs. |
+
+> **Tip:** All three sources impose polite‑usage limits (e.g., “no more than 5 req/s”). Wrap the `session.get` calls in a tiny rate‑limiter (or use the `aiohttp_retry` library) to stay on the safe side.
 
 ## 2.2 Metadata Harvesting
 
@@ -143,6 +259,57 @@ CREATE TABLE images (
     ingest_ts   TIMESTAMP DEFAULT now()
 );
 ```
+
+## 2.3 Inserting the Harvested Metadata into PostgreSQL
+Once you have `metadata.jsonl`, load it into the images table described in the original section. The loader works for any of the three sources because the JSON keys are consistent.
+
+```python
+import json, psycopg2, uuid
+from pathlib import Path
+
+conn = psycopg2.connect(
+    dbname="image_db",
+    user="postgres",
+    password=os.getenv("PG_PASSWORD"),
+    host="localhost"
+)
+cur = conn.cursor()
+
+def upsert_image(rec):
+    cur.execute("""
+        INSERT INTO images (
+            id, source, source_id, file_path, sha256,
+            width, height, mime_type, created_at,
+            license, tags, caption, ocr_text
+        ) VALUES (
+            gen_random_uuid(), %(source)s, %(source_id)s, %(path)s,
+            %(sha)s, NULL, NULL, NULL, now(),
+            %(license)s, ARRAY[]::TEXT[], %(title)s, NULL
+        )
+        ON CONFLICT (source, source_id) DO UPDATE
+        SET file_path = EXCLUDED.file_path,
+            license   = EXCLUDED.license,
+            caption   = EXCLUDED.caption;
+    """, {
+        "source": rec["source"],
+        "source_id": rec["source_id"],
+        "path": rec["path"],
+        "sha": hashlib.sha256(Path(rec["path"]).read_bytes()).hexdigest(),
+        "license": rec["license"],
+        "title": rec.get("title") or rec.get("caption") or ""
+    })
+
+with open("metadata.jsonl") as f:
+    for line in f:
+        upsert_image(json.loads(line))
+        conn.commit()
+
+cur.close()
+conn.close()
+```
+
++ The `ON CONFLICT` clause guarantees idempotent runs – you can re‑scrape a source without creating duplicate rows.
++ You can extend the `INSERT` list later (e.g., `width`, `height`, `ocr_text`) once you run the image‑analysis steps.
 
 # 3. Representations (Formal, Conceptual, Historical)
 
