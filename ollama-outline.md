@@ -47,12 +47,11 @@ The guide is broken into four layers (data, representation, graph, service) and 
                      +--------------------------+
 
 
-+ Scrapers feed raw images + metadata.
-+ Embedding Service creates three orthogonal embeddings per image.
-+ Vector + Property Stores keep fast‑lookup vectors and rich metadata.
-+ Neo4j (or similar) stores a multigraph where each edge type corresponds to one affinity.
-+ Recommendation Engine performs a weighted‑sum of similarity scores or runs a graph
-+ neural network to rank candidates.
++ **Scrapers** feed raw images + metadata.
++ **Embedding Service** creates three orthogonal embeddings per image.
++ **Vector + Property Stores** keep fast‑lookup vectors and rich metadata.
++ **Neo4j** (or similar) stores a **multigraph** where each edge type corresponds to one affinity.
++ **Recommendation Engine** performs a **weighted‑sum** of similarity scores or runs a **graph neural network*** to rank candidates.
 
 ## 2. Data Acquisition (Scraping & Ingestion)
 
