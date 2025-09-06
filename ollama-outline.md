@@ -58,12 +58,13 @@ The guide is broken into four layers (data, representation, graph, service) and 
 
 # 2. Data Acquisition (Scraping & Ingestion)
 
-Source	Typical Access	Legal Note	Recommended Scraper
-Wikimedia Commons	Public API, OAI‑PMH	CC‑BY/SA	mwclient + requests
-Flickr	Public API (requires API key)	CC‑BY/SA or All Rights Reserved	flickrapi
-Unsplash	API (rate‑limited)	Unsplash License (free commercial)	unsplash-python
-Art Institute of Chicago, Met Museum, Europeana	Open data portals (CSV/JSON)	CC‑0/CC‑BY	wget/curl + pandas
-Google Image Search	Not recommended for large‑scale scraping (TOS violation)	–	Use Bing Image Search API (commercial)
+| **Source** | **Typical Access** | **Legal Note** | **Recommended Scraper** |
+| --- | --- | --- | --- |
+| **Wikimedia Commons** | Public API, OAI‑PMH | CC‑BY/SA | `mwclient` + `requests` |
+| **Flickr** | Public API (requires API key) | CC‑BY/SA or All Rights Reserved | `flickrapi` |
+| **Unsplash** | API (rate‑limited) | Unsplash License (free commercial) | `unsplash-python` |
+| **Art Institute of Chicago, Met Museum, Europeana** | Open data portals (CSV/JSON) | CC‑0/CC‑BY | `wget/curl` + `pandas` |
+| **Google Image Search** | Not recommended for large‑scale scraping (TOS violation) | – | Use **Bing Image Search API** (commercial) |
 
 ## 2.1 Scraper Boilerplate (Python)
 ```
