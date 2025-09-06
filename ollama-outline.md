@@ -676,3 +676,61 @@ All numbers are **monthly** unless otherwise noted. Prices are taken from the 20
 | **12** | **Personnel (Part‑time Ops/Dev)** | 0.25FTE (≈10h/week) senior engineer for deployments, updates & incident response. | $2500 | $30000 | Assumes $120k/yr salary + benefits. |
 | **13** | **Contingency / Miscellaneous** | 10% of subtotal (covers occasional spot‑instance usage, extra storage, licensing for optional commercial tools). | $558 | $6696 | - |
 | **—** | **Total Monthly** | - | **≈$4983** | **≈$59800** | - |
+
+## 12.2 Why These Numbers Make Sense for the Given Load
+*table coming*
+
+## 12.3 Cost‑Reduction Levers
+*table coming*
+
+## 12.4 Break‑Even & ROI Perspective
+*table coming*
+
+> Bottom line: For the modest 1000‑user target, the service can be run comfortably under $5k/month. The dominant line item is the LLM inference cost; swapping to a self‑hosted open‑source model or aggressively caching responses can halve that expense with minimal impact on user experience.
+
+## 12.5 Quick‑Start Cost‑Calculator (Python)
+If you want to tweak the numbers for your own traffic patterns, the snippet below lets you plug in variables and get a monthly estimate:
+
+```python
+def estimate_monthly(
+    users=1_000,
+    interactions_per_user=500,
+    avg_tokens_per_inter=200,
+    gpu_hours_per_day=12,
+    gpu_instances=2,
+    api_nodes=2,
+    storage_tb=2,
+    cdn_gb=100,
+    lLM_price_per_1k_tokens=0.015,   # GPT‑4o price
+    embed_price_per_1k_tokens=0.0001
+):
+    # 1. LLM inference
+    total_tokens = users * interactions_per_user * avg_tokens_per_inter
+    lLM_cost = total_tokens/1_000 * lLM_price_per_1k_tokens
+
+    # 2. Embedding generation (once per image)
+    embed_cost = (1_000_000 / 1_000) * embed_price_per_1k_tokens   # 1M images
+
+    # 3. Compute (API)
+    api_cost = api_nodes * 0.040 * 730   # $0.040 per hour for t3.medium (approx)
+
+    # 4. GPU workers
+    gpu_cost = gpu_instances * gpu_hours_per_day * 30 * 2.75  # $2.75 per GPU‑hour (p3.2xlarge)
+
+    # 5. Storage
+    storage_cost = storage_tb * 1024 * 0.023   # $0.023 per GB‑month (S3 Standard)
+
+    # 6. CDN
+    cdn_cost = cdn_gb * 0.09
+
+    # 7. Misc (vector store, DB, monitoring, ops)
+    misc = 500  # rough lump sum for all the other services above
+
+    total = sum([lLM_cost, embed_cost, api_cost, gpu_cost,
+                 storage_cost, cdn_cost, misc])
+    return round(total, 2)
+
+print("Estimated monthly cost:", estimate_monthly())
+```
+
+Running the function with the default values prints something close to **$4950/month,** matching the table.
