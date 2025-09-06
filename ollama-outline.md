@@ -434,7 +434,8 @@ Attribution	Auto‑generate an “Attribution string” (Artist – Source – L
 Bias	Evaluate representation across cultures, genders, eras. Add a “diversity” weighting if needed.
 Privacy	No personal data is collected; if you ever ingest user‑uploaded images, run face‑blur before storage.
 Explainability	UI shows the three affinity scores (e.g., “Formal: 0.81 – same palette”, “Conceptual: 0.73 – both depict trains”, “Historical: 0.68 – both early‑20th c. Impressionism”).
-9. Sample Project Timeline (6 Months)
+
+# 9. Sample Project Timeline (6 Months)
 
 Week	Milestone
 1‑2	Set up repo, CI, cloud infra; pick 2‑3 pilot image sources.
@@ -449,7 +450,8 @@ Week	Milestone
 19‑20	Add GNN link‑prediction model (optional) and compare performance.
 21‑22	Scale up to 1 M images; shard FAISS, add Neo4j replicas.
 23‑24	Write documentation, open‑source the code, prepare demo video.
-10. Quick‑Start Code Repository Skeleton
+
+# 10. Quick‑Start Code Repository Skeleton
 
 repo/
 ├─ data/
@@ -484,11 +486,10 @@ Dockerfile builds a multi‑stage image:
 1️⃣ Base = python:3.11-slim + ffmpeg, libgl1.
 2️⃣ Install torch, torchvision, faiss-gpu, neo4j, psycopg2.
 3️⃣ Copy the code, set entrypoint to uvicorn api.main:app.
-11. Closing Thoughts
 
-Modularity is key – keep scrapers, embeddings, and graph logic independent so you can swap a model (e.g., replace DINOv2 with a future diffusion‑based style encoder) without re‑writing the whole pipeline.
-Explainability wins – users will trust recommendations more when you can surface “shared brush‑stroke” or “same exhibition year” cues.
-Start small, iterate – a prototype with 10‑20 k images will surface most engineering challenges (deduplication, licensing, vector drift). Once the pipeline is stable, scale horizontally.
+# 11. Closing Thoughts
++ **Modularity is key** – keep scrapers, embeddings, and graph logic independent so you can swap a model (e.g., replace DINOv2 with a future diffusion‑based style encoder) without re‑writing the whole pipeline.
++ **Explainability wins** – users will trust recommendations more when you can surface “shared brush‑stroke” or “same exhibition year” cues.
++ **Start small, iterate** – a prototype with 10‑20 k images will surface most engineering challenges (deduplication, licensing, vector drift). Once the pipeline is stable, scale horizontally.
+
 You now have a full technical roadmap, sample code, and operational guidance to turn a “starting‑image recommendation” concept into a production‑ready system. Good luck, and feel free to ask for deeper dives into any component!
-Downloading model
-0 B / 0 B (0%)
