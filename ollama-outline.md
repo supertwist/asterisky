@@ -1,7 +1,7 @@
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
 The guide is broken into four layers (data, representation, graph, service) and includes concrete tool choices, code snippets, and a realistic project timeline.
 
-1. High‑Level Architecture
+## 1. High‑Level Architecture
 
                +-------------------+        +-------------------+
                |  Scrapers / Crawl |  --->  |  Raw Image Store  |
@@ -45,12 +45,16 @@ The guide is broken into four layers (data, representation, graph, service) and 
                      +--------------------------+
                      |  API / UI (FastAPI, React)|
                      +--------------------------+
-Scrapers feed raw images + metadata.
-Embedding Service creates three orthogonal embeddings per image.
-Vector + Property Stores keep fast‑lookup vectors and rich metadata.
-Neo4j (or similar) stores a multigraph where each edge type corresponds to one affinity.
-Recommendation Engine performs a weighted‑sum of similarity scores or runs a graph neural network to rank candidates.
-2. Data Acquisition (Scraping & Ingestion)
+
+
++ Scrapers feed raw images + metadata.
++ Embedding Service creates three orthogonal embeddings per image.
++ Vector + Property Stores keep fast‑lookup vectors and rich metadata.
++ Neo4j (or similar) stores a multigraph where each edge type corresponds to one affinity.
++ Recommendation Engine performs a weighted‑sum of similarity scores or runs a graph
++ neural network to rank candidates.
+
+## 2. Data Acquisition (Scraping & Ingestion)
 
 Source	Typical Access	Legal Note	Recommended Scraper
 Wikimedia Commons	Public API, OAI‑PMH	CC‑BY/SA	mwclient + requests
@@ -300,23 +304,23 @@ w
 edge
 #
 edges
-score(i)=α⋅cosine(v 
+score(i)=α⋅cosine(v
 q
-​	
- ,v 
+​
+ ,v
 i
-​	
- )+β⋅ 
+​
+ )+β⋅
 #edges
-∑ 
+∑
 edge∈{F,C,H}
-​	
- w 
+​
+ w
 edge
-​	
- 
-​	
- 
+​
+
+​
+
 Typical values: α=0.7, β=0.3.
 
 5.2 Graph‑Neural‑Network (Optional, for higher quality)
