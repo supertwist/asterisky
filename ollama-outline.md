@@ -355,13 +355,15 @@ edge
 
 ​$$
 
-Typical values: α=0.7, β=0.3.
+Typical values: `α=0.7`, `β=0.3`.
 
-5.2 Graph‑Neural‑Network (Optional, for higher quality)
+## 5.2 Graph‑Neural‑Network (Optional, for higher quality)
 
-Node features = composite vector (or split into three sub‑vectors).
-Edge types → one‑hot or learned embedding (formal / conceptual / historical).
-Use PyG (PyTorch Geometric) or DGL to train a link‑prediction model:
+1. **Node features** = composite vector (or split into three sub‑vectors).
+2. **Edge types** → one‑hot or learned embedding (formal / conceptual / historical).
+3. Use **PyG** (PyTorch Geometric) or **DGL** to train a **link‑prediction** model:
+
+```python
 import torch_geometric as pyg
 
 class AffinityGNN(torch.nn.Module):
@@ -377,10 +379,13 @@ class AffinityGNN(torch.nn.Module):
         return x
 
 # Train with positive edges (existing affinities) vs negative sampled edges.
-After training, run inference on the query node to rank all other nodes.
-This approach automatically learns how to balance the three affinities.
-5.3 API End‑point (FastAPI)
+```
 
++ After training, **run inference** on the query node to rank all other nodes.
++ This approach automatically learns how to balance the three affinities.
+
+## 5.3 API End‑point (FastAPI)
+```python
 from fastapi import FastAPI, UploadFile
 from pydantic import BaseModel
 import uvicorn, numpy as np, faiss, aiohttp
@@ -411,21 +416,27 @@ async def recommend(file: UploadFile, top_k: int = 20):
         resp = await s.post("http://metadata-service/batch", json={"ids": ids})
         meta = await resp.json()
     return {"recommendations": meta}
-Streaming response – send low‑resolution thumbnails first, then higher‑res on demand.
-6. Evaluation & Tuning
+```
 
-Metric	How to compute	What it tells you
-Recall@K (image retrieval)	For a test set with known “related” images (e.g., same museum collection), measure fraction of true relatives in top‑K.	Effectiveness of similarity.
-Mean Reciprocal Rank (MRR)	Average of 1 / rank of first correct hit.	Ranking quality.
-Human Preference Test	Show participants a starting image + 5 candidates (different weighting of affinities) and ask which feels “most related”.	Real‑world relevance & explainability.
-Edge Sparsity	Avg. degree per node.	Trade‑off between coverage & graph size.
-Latency	End‑to‑end time (image upload → recommendation).	System performance.
-Tuning knobs
++ **Streaming response** – send low‑resolution thumbnails first, then higher‑res on demand.
 
-Embedding weights (0.4/0.4/0.2 in composite) – optimize on recall.
-FAISS index type – IVF‑PQ for >10 M images, HNSW for ultra‑low latency.
-Edge threshold – higher threshold → more explainable but lower recall.
-7. Scalability & Ops
+# 6. Evaluation & Tuning
+
+| **Metric** | **How to compute** | **What it tells you** |
+| --- | --- | --- |
+| **Recall@K** (image retrieval) | For a test set with known “related” images (e.g., same museum collection), measure fraction of true relatives in top‑K. | Effectiveness of similarity. |
+| **Mean Reciprocal Rank (MRR)** | Average of 1 / rank of first correct hit. | Ranking quality. |
+| **Human Preference Test** | Show participants a starting image + 5 candidates (different weighting of affinities) and ask which feels “most related”. | Real‑world relevance & explainability. |
+| **Edge Sparsity** | Avg. degree per node. | Trade‑off between coverage & graph size. |
+| **Latency** | End‑to‑end time (image upload → recommendation). | System performance. |
+
+**Tuning knobs**
+
++ **Embedding weights** (`0.4/0.4/0.2` in composite) – optimize on recall.
++ **FAISS index type** – IVF‑PQ for >10 M images, HNSW for ultra‑low latency.
++ **Edge threshold** – higher threshold → more explainable but lower recall.
+
+# 7. Scalability & Ops
 
 Component	Scale Strategy
 Scrapers	Deploy as Kubernetes CronJobs or AWS Batch; use S3 for raw storage.
@@ -436,7 +447,8 @@ Metadata DB	PostgreSQL with partitioning by ingestion date.
 CI/CD	GitHub Actions → Docker images → Helm charts → Helm release on a private EKS/GKE cluster.
 Monitoring	Prometheus + Grafana (FAISS query latency, Neo4j query time, GPU utilization).
 Backup	Daily S3 snapshots of raw images + nightly dump of Postgres + Neo4j export (neo4j-admin dump).
-8. Legal & Ethical Checklist
+
+# 8. Legal & Ethical Checklist
 
 Issue	Mitigation
 Copyright	Only ingest images with CC‑0, CC‑BY, CC‑BY‑SA or other permissive licenses. Record the original license in the DB; expose it in the UI.
