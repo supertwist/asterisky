@@ -302,8 +302,9 @@ Given a **query image** `q`:
 2. Retrieve top‑N nearest neighbours from FAISS → set `V`.
 3. Pull corresponding **edge weights** from Neo4j (if any).
 4. Combine:
-$$score(i) = α⋅cosine (vq,vi) + β⋅∑ edge∈ {F,C,H} w edge #edges
-score(i)=α⋅cosine(vq,v i) + β⋅#edges ∑ edge∈ {F,C,H} w edge $$
+$$score(i) = a · cosine(vq, vi) + β·
+Σ<sub>edge∈{F,C,H}</sub> w<sub>edge</sub>
+#edges$$
 
 Typical values: `α=0.7`, `β=0.3`.
 
