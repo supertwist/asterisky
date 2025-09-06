@@ -2,7 +2,7 @@
 
 **Things to do**
 + Fix 5.1 formula
-+ revise 2.0 Data acqusition table to reflect actual sources used in Asterism
++ ~~revise 2.0 Data acqusition table to reflect actual sources used in Asterism~~
 + review services required, price, and look for free alternatives
 
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
@@ -64,7 +64,7 @@ The guide is broken into four layers (data, representation, graph, service) and 
 # 2. Data Acquisition (Scraping & Ingestion)
 | **Source** | **Typical Access Method** | **License / Legal Note** | **Recommended Scraper / Tool** |
 | --- | --- | --- | --- |
-| **Wikimedia Commons** | Public MediaWiki API (action=query&list=allimages) – supports continuation for paging | Mostly **CC‑BY, CC‑BY‑SA, CC0,** and some **All Rights Reserved** items. Always keep the `license` field from the API response. | `mwclient` + `aiohttp` (async) – see the code block in the original section. |
+| **Wikimedia Commons** | Public MediaWiki API (`action=query&list=allimages`) – supports continuation for paging | Mostly **CC‑BY, CC‑BY‑SA, CC0,** and some **All Rights Reserved** items. Always keep the `license` field from the API response. | `mwclient` + `aiohttp` (async) – see the code block in the original section. |
 | **The Metropolitan Museum of Art – Open Access** | Bulk download of a [**JSON‑LD** manifest](https://github.com/metmuseum/openaccess) plus direct image URLs. The manifest contains metadata, tags, and rights. | **CC‑0** (public domain) for ~375k images. No attribution required, but it’s good practice to keep the `artist` / `source` fields. | Simple `requests` + `pandas` to read the JSON lines; a tiny helper script (shown below). |
 | **The Art Institute of Chicago – Digital Collections** | REST API (https://api.artic.edu/api/v1/artworks) that returns paginated JSON with image IDs, URLs, and rights information. | **CC‑BY‑SA** for most images; a few are **All Rights Reserved.** Respect the `rights_statement` field. | `aiohttp` async loop + pagination handling (code below). |
 
