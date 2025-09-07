@@ -33,3 +33,4 @@ This lays the groundwork for a version of **Asterism** as proposed to Nidhi and 
 + add export board to .PDF
 + add HSB controls
 + add alpha
++ variety parameter (how *different* are the images from each other?)

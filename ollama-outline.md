@@ -1,4 +1,4 @@
-***Generated using Ollama, `gpt-oss:120b`. Fixing markdown - the formula in 5.1 in incoorectly rendered - I need to go deep on markdown renderings of formulas, and will review in detail and comment as time allows. For now, just a useful roadmap.***
+***Generated using Ollama, `gpt-oss:120b`. Fixing markdown - the formula in 5.1 in incorrectly rendered - I need to go deep on markdown renderings of formulas, and will review in detail and comment as time allows. For now, just a useful roadmap.***
 
 **Things to do**
 + Fix 5.1 formula
