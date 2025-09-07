@@ -1,6 +1,6 @@
 # asterisky
 
-Notes on [**asterism**](https://asterism.neetocode.com/site/nidhi-singh-rathore/01JZP27CXXVNVJSP67HKQCJMKD)
+Notes on [**Asterism**](https://asterism.neetocode.com/site/nidhi-singh-rathore/01JZP27CXXVNVJSP67HKQCJMKD)
 
 # Affinities
 This is a thought experiment/sketch to extend **Asterism** such that image boards can be be iterated along three axes:
@@ -8,7 +8,7 @@ This is a thought experiment/sketch to extend **Asterism** such that image board
 2. **conceptual affinities** - subject matter, intentions, associations, influences
 3. **historical affinities** - date of creation, provenance, contemporary events
 
-There may be a better set of dimensions for this problem, but this is a simple, small number for illustration.
+> **James' comment:** There may be a better set of dimensions for this problem, but this is a simple, small number for illustration.
 
 We propose using generative AI to build a graph underlying a recommendation system.
 

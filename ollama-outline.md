@@ -3,7 +3,8 @@
 **Things to do**
 + Fix 5.1 formula
 + ~~revise 2.0 Data acqusition table to reflect actual sources used in Asterism~~
-+ review services required, price, and look for free alternatives
++ ~~review services required, price, and look for free alternatives~~
++ Test python, esp. 12.5. I suspect it won't run, but curious to see...
 
 Below is a complete end‑to‑end blueprint for building a “starting‑image‑driven recommendation engine” that pulls images from many public repositories, extracts formal, conceptual, and historical affinities, stores the results in a graph, and serves real‑time recommendations.
 
@@ -72,6 +73,8 @@ The guide is broken into four layers (data, representation, graph, service) and 
 + All three provide machine‑readable metadata (tags, creator, creation date, rights).
 + They expose large open‑access corpora that are safe to redistribute in a recommendation service (provided you surface the original license).
 + Each has a stable, documented API, which means you can keep the scrapers running long‑term with minimal maintenance.
+
+> **James' comment:** this outline assumes ongoing scraping, vector generation, etc. For a pilot project, I don't this needs to be an ongoing activity past launch. *If* it's determined that this is a viable ongoing project, *then* build that into ongoing planning/budget.
 
 ## 2.1 Unified Scraper Skeleton
 All three sources can be driven from a single **async‑oriented** framework. The skeleton below shows how to plug in each source as a coroutine that yields a dictionary for every image:
@@ -678,15 +681,38 @@ All numbers are **monthly** unless otherwise noted. Prices are taken from the 20
 | **—** | **Total Monthly** | - | **≈$4983** | **≈$59800** | - |
 
 ## 12.2 Why These Numbers Make Sense for the Given Load
-*table coming*
+| **Metric** | **Value** | **Reasoning** |
+| --- | --- | --- |
+| **Users** | 1000 | Small‑to‑mid‑size B2B or niche‑consumer app. |
+| **Interactions / User** | 500 | Roughly 2 requests per day over a 6‑month active period; yields **500k total API calls** per month. |
+| **Embedding Size** | 1M vectors (≈153MiB each) | One vector per image + some extra for future growth. |
+| **Vector‑Store Queries** | 500k queries / month, each returning 10‑20 nearest neighbours. | Qdrant on a modest node handles this comfortably (<10ms latency). |
+| **LLM Tokens** | 100M tokens / month (≈1500 USD) | This is the biggest variable. If you switch to a cheaper local model (e.g., LLaMA‑2 7B fine‑tuned) and run it on the same GPU workers, you could cut this to **≈$300 / month** (GPU compute already budgeted). |
+| **GPU Hours** | 2 × p3.2xlarge for 12h/day ≈720 GPU‑hrs / month | Sufficient for OCR (Tesseract) + CLIP embeddings on the nightly ingest of ~10k new images. |
+| **Storage Growth** | 2TB raw + 200GB processed | At 2MB per image you can store ~1M images. Future growth can be accommodated by adding more S3 storage (≈$0.02 /GB‑month). |
+
 
 ## 12.3 Cost‑Reduction Levers
-*table coming*
+| **Lever** | **Potential Savings** | **How to Apply** |
+| --- | --- | --- |
+| **Model Choice** | Replace GPT‑4o with an **open‑source LLM** (e.g., LLaMA‑2‑7B) hosted on the same GPU workers → **≈$1200/yr** saved. | Deploy a FastAPI inference wrapper (vLLM, Text Generation Inference). |
+| **Batching & Caching** | Cache LLM‑generated explanations per image‑pair for 24h → reduces duplicate calls by ~30% → **≈$450/yr** saved. | Use Redis (cost ≈$15 / month). |
+| **Spot Instances** | Run GPU workers on spot/preemptible instances (70% discount) → **≈$150/month** saved. | Add auto‑recovery logic to restart jobs if preempted. |
+| **Serverless API** | Replace always‑on EC2 API nodes with **AWS Lambda + API Gateway** (cost scales with invocations) → could drop the $80 / month API cost to <$20. | Only advisable if latency constraints are modest (<100ms). |
+| **Lower‑tier Vector Store** | Switch from Qdrant‑cloud “Standard” to “Starter” (100GiB) if vector count stays <500k → ≈$30 / month saved. | Monitor vector count; upgrade when needed. |
+
+> **James' comment:** build model testing/choice early into the dev process.
 
 ## 12.4 Break‑Even & ROI Perspective
-*table coming*
+| Scenario | Annual Cost | Expected Revenue / Cost‑Offset |
+| --- | --- | --- |
+| **Base** (estimates above) | **≈$60k** | If each active user is worth $100/yr (e.g., subscription, ad‑revenue, or B2B licensing) → $100k revenue → **profit ≈$40k.** |
+| **Optimized** (open‑source LLM + spot GPUs) | **≈$48k** | Same $100k revenue → **profit ≈$52k.** |
+| **Scale‑up** (5×users, same interaction rate) | **≈$300k** | Revenue $500k (if $100/yr per user) → **profit ≈$200k.** |
 
 > Bottom line: For the modest 1000‑user target, the service can be run comfortably under $5k/month. The dominant line item is the LLM inference cost; swapping to a self‑hosted open‑source model or aggressively caching responses can halve that expense with minimal impact on user experience.
+
+> **James' comment:** this isn't a for-profit venture, but the number here are useful for considering sustainability. If this were a valuable tool for other universities, could licensing make this sustainable?
 
 ## 12.5 Quick‑Start Cost‑Calculator (Python)
 If you want to tweak the numbers for your own traffic patterns, the snippet below lets you plug in variables and get a monthly estimate:
