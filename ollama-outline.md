@@ -479,7 +479,7 @@ Given a **query image** `q`:
 4. Combine:
 
 ```math
-$$score(i) = \alpha \cdot \cosine(v_q, v_i)
+$$score(i) = \alpha \cdot cosine(v_q, v_i)
 + \beta \cdot \frac{\sum_{\text{edge} \in \{F,C,H\}} w_{\text{edge}}}{\#\text{edges}}$$
 ```
 
