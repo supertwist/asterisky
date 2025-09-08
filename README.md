@@ -32,5 +32,6 @@ This lays the groundwork for a version of **Asterism** as proposed to Nidhi and 
 + add image download (best res)
 + add export board to .PDF
 + add HSB controls
-+ add alpha
++ add alpha (AI pre-generated, add toggle)
++ space/align widget?
 + variety parameter (how *different* are the images from each other?)
