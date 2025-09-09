@@ -24,7 +24,7 @@ This lays the groundwork for a version of **Asterism** as proposed to Nidhi and 
 > + Player can elect to do nothing, replace current card with a possible card, or replace another card in the hand.
 > + so ultimately, the player can build an 'ideal' hand - seven cards (images) that started as random but were refined by exploring an exciting image from the initial deal.
 
-> **James' comment: A metaphor: "Diggin' down deep in the record bin!"** What I'm thinking of, WRT how Nidhi and Marc posed the question, "What are your expectations for student visual research, both in and outside class?" is something like this: when I was a teenager and PASSIONATELY curious about music, I would really absorb the liner notes. "I love the drums on this record... who was the drummer?" Then digging through bins I'd get excited, "Oh! Manu Katche plays drums on this record, too. Sold!" And similarly for painters, I'd find the influences or associations with, say, Georgia O'Keefe... etc. Can Asterism do the same for images?
+Another metaphor is on my mind: **"Diggin' down deep in the record bin!"** What I'm thinking of, WRT how Nidhi and Marc posed the question, "What are your expectations for student visual research, both in and outside class?" is something like this: when I was a teenager and PASSIONATELY curious about music, I would really absorb the liner notes. "I love the drums on this record... who was the drummer?" Then digging through bins I'd get excited, "Oh! Manu Katche plays drums on this record, too. Sold!" And similarly for painters, I'd find the influences or associations with, say, Georgia O'Keefe... etc. Can Asterism do the same for images?
 
 # Additional app features for consideration
 + add scaling
